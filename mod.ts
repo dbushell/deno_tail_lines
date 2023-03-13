@@ -58,7 +58,7 @@ export async function* tailLines(
 
 export const tailLine = async (
   path: string,
-  maxLines = Number.MAX_SAFE_INTEGER,
+  maxLines: number,
   decoderOpts?: DecoderOptions
 ): Promise<string[]> => {
   const file = await Deno.open(path);
