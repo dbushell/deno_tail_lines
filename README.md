@@ -4,24 +4,24 @@ Read the last N lines of a text file and return a string array.
 
 ## Usage
 
-Using `tailLines` async function:
+Using `tailLine` async function:
 
 ```ts
-import {tailLines} from 'https://deno.land/x/taillines@v0.1.0/mod.ts';
+import {tailLine} from 'https://deno.land/x/taillines/mod.ts';
 const path = '/path/to/example.log';
 const maxLines = 10;
-const lines = await tailLines(path, maxLines);
+const lines = await tailLine(path, maxLines);
 ```
 
-Using `tailLine` async iterator function:
+Using `tailLines` async iterator function:
 
 ```ts
-import {tailLine} from 'https://deno.land/x/taillines@v0.1.0/mod.ts';
+import {tailLines} from 'https://deno.land/x/tailline/mod.ts';
 const path = '/path/to/example.log';
 const maxLines = 10;
 const lines: string[] = [];
 const file = await Deno.open(path);
-for await (const line of tailLine(file, maxLines)) {
+for await (const line of tailLines(file, maxLines)) {
   lines.unshift(line);
 }
 file.close();

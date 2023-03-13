@@ -36,7 +36,7 @@ export const readOffsets = async (
   return offsets;
 };
 
-export async function* tailLine(
+export async function* tailLines(
   file: Deno.FsFile,
   maxLines = Number.MAX_SAFE_INTEGER,
   decoderOpts?: DecoderOptions
@@ -56,14 +56,14 @@ export async function* tailLine(
   }
 }
 
-export const tailLines = async (
+export const tailLine = async (
   path: string,
   maxLines = Number.MAX_SAFE_INTEGER,
   decoderOpts?: DecoderOptions
 ): Promise<string[]> => {
   const file = await Deno.open(path);
   const lines: string[] = [];
-  for await (const line of tailLine(file, maxLines, decoderOpts)) {
+  for await (const line of tailLines(file, maxLines, decoderOpts)) {
     lines.push(line);
   }
   file.close();
