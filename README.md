@@ -7,7 +7,7 @@ Read the last N lines of a text file and return a string array.
 Using `tailLine` async function:
 
 ```ts
-import {tailLine} from 'https://deno.land/x/taillines/mod.ts';
+import {tailLine} from 'https://deno.land/x/tail_lines/mod.ts';
 const path = '/path/to/example.log';
 const maxLines = 10;
 const lines = await tailLine(path, maxLines);
@@ -16,7 +16,7 @@ const lines = await tailLine(path, maxLines);
 Using `tailLines` async iterator function:
 
 ```ts
-import {tailLines} from 'https://deno.land/x/taillines/mod.ts';
+import {tailLines} from 'https://deno.land/x/tail_lines/mod.ts';
 const path = '/path/to/example.log';
 const maxLines = 10;
 const lines: string[] = [];
