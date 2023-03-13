@@ -44,7 +44,7 @@ import {readLines} from "https://deno.land/std/io/mod.ts";
 const path = '/path/to/example.log';
 const maxLines = 10;
 let lines: string[] = [];
-const file = await Deno.open('/path/to/example.log');
+const file = await Deno.open(path);
 for await(const line of readLines(file)) {
   lines.push(line);
 }
@@ -66,7 +66,7 @@ const {stdout} = await command.output();
 const lines = new TextDecoder().decode(stdout).split('\n');
 ```
 
-This is slower than above (until `readLines` balloons), but more consistent and relatively fast for all use cases.
+This is slower than above (until `readLines` balloons) but more consistent and relatively fast for all use cases.
 
 ## License
 
