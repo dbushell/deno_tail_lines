@@ -43,8 +43,7 @@ export async function* tailLine(
 ) {
   const textDecoder = new TextDecoder(decoderOpts?.encoding, decoderOpts);
   const offsets: number[] = await readOffsets(file, maxLines + 1);
-  for (let i = 0; i < offsets.length - 1; i++) {
-    if (i >= maxLines) break;
+  for (let i = 0; i < offsets.length - 1 && i < maxLines; i++) {
     const length = offsets[i + 1] - offsets[i];
     await file.seek(-offsets[i + 1], Deno.SeekMode.End);
     const buffer = new Uint8Array(length);
