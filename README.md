@@ -31,11 +31,13 @@ file.close();
 
 This works by reading the file in reverse. It is very fast when reading a small number of lines from a very large file. For example, tailing 10 lines from the end of a 500000 line 1GB file can take < 1ms on a fast drive.
 
-If you're tailing the majority of lines, e.g. 900 of 1000, then splicing `readLines` is faster. For small files ~100 lines there is little difference to either technique.
+If you're tailing the majority of lines, e.g. 900 of 1000, then slicing `readLines` is faster. For small files ~100 lines there is little difference to either technique.
 
 ## Using the Standard Library
 
-The Deno standard library includes a [`readLines`](https://deno.land/std/io/read_lines.ts) function.
+The Deno standard library includes a [`readLines`](https://deno.land/std/io/read_lines.ts) function. You can read all lines and slice the result.
+
+The performance grows exponentially as is unsuitable for large files unless you want to keep most lines.
 
 ```ts
 import {readLines} from "https://deno.land/std/io/mod.ts";
@@ -48,6 +50,20 @@ for await(const line of readLines(file)) {
 }
 file.close();
 lines = lines.slice(-maxLines);
+```
+
+## Using `tail` Unix command
+
+Spawning a `tail` process is another option. It's slightly slower than above (until `readLines` balloons).
+
+```ts
+const path = '/path/to/example.log';
+const maxLines = 10;
+const command = new Deno.Command('tail', {
+  args: ['-n', String(maxLines), `${path}`]
+});
+const {stdout} = await command.output();
+const lines = new TextDecoder().decode(stdout).split('\n');
 ```
 
 ## License
