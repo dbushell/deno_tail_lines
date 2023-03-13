@@ -37,7 +37,7 @@ If you're tailing the majority of lines, e.g. 900 of 1000, then slicing `readLin
 
 The Deno standard library includes a [`readLines`](https://deno.land/std/io/read_lines.ts) function. You can read all lines and slice the result.
 
-The performance grows exponentially as is unsuitable for large files unless you want to keep most lines.
+Performance grows exponentially and is unsuitable for large files unless you want to keep most lines.
 
 ```ts
 import {readLines} from "https://deno.land/std/io/mod.ts";
@@ -54,7 +54,7 @@ lines = lines.slice(-maxLines);
 
 ## Using `tail` Unix command
 
-Spawning a `tail` process is another option. It's slightly slower than above (until `readLines` balloons).
+Spawning a `tail` process is another option.
 
 ```ts
 const path = '/path/to/example.log';
@@ -65,6 +65,8 @@ const command = new Deno.Command('tail', {
 const {stdout} = await command.output();
 const lines = new TextDecoder().decode(stdout).split('\n');
 ```
+
+This is slower than above (until `readLines` balloons), but more consistent and relatively fast for all use cases.
 
 ## License
 
