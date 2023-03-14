@@ -2,6 +2,10 @@
 
 Read the last N lines of a text file and return a string array.
 
+`import {tailLines} from 'https://deno.land/x/tail_lines/mod.ts';`
+
+[GitHub](https://github.com/dbushell/deno_tail_lines) / [Deno module](https://deno.land/x/tail_lines)
+
 ## Usage
 
 Using `tailLine` async function:
