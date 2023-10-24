@@ -26,8 +26,11 @@ export const readOffsets = async (
     await file.seek(-seek, Deno.SeekMode.End);
     const read = await file.read(buf);
     if (read === null) break;
-    for (let k = read; k > 0; k--) {
-      if (buf[k - 1] === LF) offsets.push(seek - k);
+    let offset = buf.length;
+    while (offset) {
+      offset = buf.lastIndexOf(LF, offset - 1);
+      if (offset === -1) break;
+      offsets.push(seek - offset - 1);
     }
     if (offsets.length >= maxOffsets) break;
   }
