@@ -11,7 +11,7 @@ interface DecoderOptions {
 
 export async function* tailLines(
   file: Deno.FsFile,
-  maxLines: number,
+  maxLines = Number.MAX_SAFE_INTEGER,
   decoderOpts?: DecoderOptions
 ): AsyncGenerator<string, void, unknown> {
   const textDecoder = new TextDecoder(decoderOpts?.encoding, decoderOpts);
