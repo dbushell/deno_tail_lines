@@ -28,33 +28,76 @@ const file = await Deno.open(path);
 for await (const line of tailLines(file, maxLines)) {
   lines.unshift(line);
 }
-file.close();
 ```
+
+### Stream API
+
+The two functions above use `TailLineStream` under the hood.
+
+To use `TailLineStream` create an instance:
+
+```ts
+import {TailLineStream} from 'https://deno.land/x/tail_lines/mod.ts';
+const path = '/path/to/example.log';
+const file = await Deno.open(path);
+const stream = new TailLineStream(file);
+const textDecoder = new TextDecoder();
+```
+
+Then use either the reader:
+
+```ts
+const reader = stream.getReader();
+reader.read().then(function process({done, value}) {
+  if (done) return;
+  console.log(textDecoder.decode(value));
+  reader.read().then(process);
+});
+```
+
+Or the async iterator:
+
+```ts
+for await (const line of stream) {
+  console.log(textDecoder.decode(line));
+}
+```
+
+You could pipe through a `TextDecoderStream`:
+
+```ts
+const stream = new TailLineStream(file).pipeThrough(new TextDecoderStream());
+for await (const line of stream) {
+  console.log(line);
+}
+```
+
+But you should just use `tailLines()` instead it will be faster.
 
 ## Performance
 
-This works by reading the file in reverse. It is very fast when reading a small number of lines from a very large file. For example, tailing 10 lines from the end of a 500000 line 1GB file can take < 1ms on a fast drive.
-
-If you're tailing the majority of lines, e.g. 900 of 1000, then slicing `readLines` is faster. For small files ~100 lines there is little difference to either technique.
+This library works by reading the file in reverse. Useful for reading a small number of lines from the end of a very large file. For example, tailing 10 lines from the end of a 500000 line 1GB file can take < 1ms on a fast drive. It is much faster than the methods below.
 
 ## Using the Standard Library
 
-The Deno standard library includes a [`readLines`](https://deno.land/std/io/read_lines.ts) function. You can read all lines and slice the result.
-
-Performance grows exponentially and is unsuitable for large files unless you want to keep most lines.
+The Deno standard library includes the [`TextLineStream`](https://deno.land/std@0.204.0/streams/mod.ts?s=TextLineStream) transform stream and now deprecated [`readLines`](https://deno.land/std@0.204.0/io/mod.ts?s=readLines) function. You can read all lines and slice the result.
 
 ```ts
-import {readLines} from "https://deno.land/std/io/mod.ts";
+import {TextLineStream} from 'https://deno.land/std@0.204.0/streams/mod.ts';
 const path = '/path/to/example.log';
 const maxLines = 10;
 let lines: string[] = [];
 const file = await Deno.open(path);
-for await(const line of readLines(file)) {
+const lines = file.readable
+  .pipeThrough(new TextDecoderStream())
+  .pipeThrough(new TextLineStream());
+for await (const line of lines) {
   lines.push(line);
 }
-file.close();
 lines = lines.slice(-maxLines);
 ```
+
+Performance balloons exponentially and is unsuitable for large files because the entire file is read through memory.
 
 ## Using `tail` Unix command
 
@@ -70,12 +113,8 @@ const {stdout} = await command.output();
 const lines = new TextDecoder().decode(stdout).split('\n');
 ```
 
-This is slower than above (until `readLines` balloons) but more consistent and relatively fast for all use cases.
-
-## License
-
-MIT License
+This technique is slower but still relatively fast compared to the standard options.
 
 * * *
 
-[MIT License](/LICENSE) | Copyright © 2023 [David Bushell](https://dbushell.com) | [@dbushell](https://twitter.com/dbushell)
+[MIT License](/LICENSE) | Copyright © 2023 [David Bushell](https://dbushell.com)

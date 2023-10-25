@@ -1,6 +1,7 @@
-const BUFFER_SIZE = 1024 * 32;
+import {readOffsets} from './src/offsets.ts';
+import {TailLineStream} from './src/stream.ts';
 
-const LF = '\n'.charCodeAt(0);
+export {readOffsets, TailLineStream};
 
 interface DecoderOptions {
   encoding?: string;
@@ -8,53 +9,23 @@ interface DecoderOptions {
   ignoreBOM?: boolean;
 }
 
-export const readOffsets = async (
-  file: Deno.FsFile,
-  maxOffsets = Number.MAX_SAFE_INTEGER
-): Promise<number[]> => {
-  const stat = await file.stat();
-  const offsets: number[] = [];
-  const maxLength = Math.min(BUFFER_SIZE, stat.size);
-  for (let i = 0; i < Math.ceil(stat.size / maxLength); i++) {
-    let length = maxLength;
-    let seek = (i + 1) * maxLength;
-    if (seek > stat.size) {
-      length = maxLength - (seek - stat.size);
-      seek = stat.size;
-    }
-    const buf = new Uint8Array(length);
-    await file.seek(-seek, Deno.SeekMode.End);
-    const read = await file.read(buf);
-    if (read === null) break;
-    let offset = buf.length;
-    while (offset) {
-      offset = buf.lastIndexOf(LF, offset - 1);
-      if (offset === -1) break;
-      offsets.push(seek - offset - 1);
-    }
-    if (offsets.length >= maxOffsets) break;
-  }
-  if (offsets.at(0) !== 0) offsets.unshift(0);
-  if (offsets.at(-1) !== stat.size) offsets.push(stat.size);
-  return offsets;
-};
-
 export async function* tailLines(
   file: Deno.FsFile,
-  maxLines = Number.MAX_SAFE_INTEGER,
+  maxLines: number,
   decoderOpts?: DecoderOptions
-) {
+): AsyncGenerator<string, void, unknown> {
   const textDecoder = new TextDecoder(decoderOpts?.encoding, decoderOpts);
-  const offsets: number[] = await readOffsets(file, maxLines + 1);
-  for (let i = 0; i < offsets.length - 1 && i < maxLines; i++) {
-    const length = offsets[i + 1] - offsets[i];
-    await file.seek(-offsets[i + 1], Deno.SeekMode.End);
-    const buffer = new Uint8Array(length);
-    await file.read(buffer);
-    if (buffer.at(-1) === LF) {
-      yield textDecoder.decode(buffer.subarray(0, -1));
-    } else {
-      yield textDecoder.decode(buffer);
+  const controller = new AbortController();
+  const stream = new TailLineStream(file, {
+    signal: controller.signal
+  });
+  let lines = 0;
+  for await (const line of stream) {
+    if (controller.signal.aborted) break;
+    yield textDecoder.decode(line);
+    if (++lines >= maxLines) {
+      controller.abort();
+      return;
     }
   }
 }
@@ -69,7 +40,6 @@ export const tailLine = async (
   for await (const line of tailLines(file, maxLines, decoderOpts)) {
     lines.push(line);
   }
-  file.close();
   lines.reverse();
   return lines;
 };
